@@ -1,0 +1,661 @@
+mysql> -- ============================================================
+mysql> -- ONLINE JOB PORTAL MANAGEMENT SYSTEM
+mysql> -- Database: MySQL 8.0+
+mysql> -- Includes tables, sample data, indexes, views, triggers,
+mysql> -- stored procedure, and example queries.
+mysql> -- ============================================================
+mysql>
+mysql> CREATE DATABASE Job_portal;
+ERROR 1007 (HY000): Can't create database 'job_portal'; database exists
+mysql> USE Job_portal;
+Database changed
+mysql>
+mysql> -- ============================================================
+mysql> -- PART 1: TABLE CREATION
+mysql> -- ============================================================
+mysql>
+mysql> -- All account types (JobSeeker, Employer, Admin) are stored here.
+mysql> CREATE TABLE Users (
+    ->     user_id INT AUTO_INCREMENT PRIMARY KEY,
+    ->     full_name VARCHAR(100) NOT NULL,
+    ->     email VARCHAR(100) UNIQUE NOT NULL,
+    ->     password VARCHAR(255) NOT NULL,
+    ->     role ENUM('JobSeeker', 'Employer', 'Admin') NOT NULL,
+    ->     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    -> );
+ERROR 1050 (42S01): Table 'users' already exists
+mysql>
+mysql> CREATE TABLE Employers (
+    ->     employer_id INT AUTO_INCREMENT PRIMARY KEY,
+    ->     user_id INT UNIQUE,
+    ->     company_name VARCHAR(150) NOT NULL,
+    ->     company_description TEXT,
+    ->     company_location VARCHAR(100),
+    ->     FOREIGN KEY (user_id) REFERENCES Users(user_id)
+    -> );
+ERROR 1050 (42S01): Table 'employers' already exists
+mysql>
+mysql> CREATE TABLE JobSeekers (
+    ->     seeker_id INT AUTO_INCREMENT PRIMARY KEY,
+    ->     user_id INT UNIQUE,
+    ->     skills TEXT,
+    ->     experience_years INT DEFAULT 0,
+    ->     resume_path VARCHAR(255),
+    ->     FOREIGN KEY (user_id) REFERENCES Users(user_id)
+    -> );
+ERROR 1050 (42S01): Table 'jobseekers' already exists
+mysql>
+mysql> CREATE TABLE Categories (
+    ->     category_id INT AUTO_INCREMENT PRIMARY KEY,
+    ->     category_name VARCHAR(100) UNIQUE NOT NULL
+    -> );
+ERROR 1050 (42S01): Table 'categories' already exists
+mysql>
+mysql> CREATE TABLE Jobs (
+    ->     job_id INT AUTO_INCREMENT PRIMARY KEY,
+    ->     employer_id INT NOT NULL,
+    ->     job_title VARCHAR(150) NOT NULL,
+    ->     job_description TEXT,
+    ->     salary DECIMAL(10,2),
+    ->     location VARCHAR(100),
+    ->     job_type ENUM('Full-Time', 'Part-Time', 'Internship') NOT NULL,
+    ->     posted_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->     FOREIGN KEY (employer_id) REFERENCES Employers(employer_id)
+    -> );
+ERROR 1050 (42S01): Table 'jobs' already exists
+mysql>
+mysql> -- Bridge table for the many-to-many relationship between Jobs and Categories.
+mysql> CREATE TABLE JobCategory (
+    ->     job_id INT NOT NULL,
+    ->     category_id INT NOT NULL,
+    ->     PRIMARY KEY (job_id, category_id),
+    ->     FOREIGN KEY (job_id) REFERENCES Jobs(job_id),
+    ->     FOREIGN KEY (category_id) REFERENCES Categories(category_i
+    ->
+    -> USE Job_portal;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'USE Job_portal' at line 8
+mysql>
+mysql> CREATE TABLE Applications (
+    ->     application_id INT AUTO_INCREMENT PRIMARY KEY,
+    ->     job_id INT NOT NULL,
+    ->     seeker_id INT NOT NULL,
+    ->     application_date DATE NOT NULL,
+    ->     status ENUM(
+    ->         'Applied',
+    ->         'Pending',
+    ->         'Shortlisted',
+    ->         'Rejected',
+    ->         'Selected'
+    ->     ) DEFAULT 'Applied',
+    ->
+    ->     FOREIGN KEY (job_id)
+    ->         REFERENCES Jobs(job_id),
+    ->
+    ->     FOREIGN KEY (seeker_id)
+    ->         REFERENCES JobSeekers(seeker_id),
+    ->
+    ->     UNIQUE (job_id, seeker_id)
+    -> );
+ERROR 1050 (42S01): Table 'applications' already exists
+mysql>
+mysql> CREATE TABLE JobLogs (
+    ->     log_id INT AUTO_INCREMENT PRIMARY KEY,
+    ->     job_id INT NOT NULL,
+    ->     action VARCHAR(50) NOT NULL,
+    ->     log_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ->     FOREIGN KEY (job_id) REFERENCES Jobs(job_id)
+    -> );
+ERROR 1050 (42S01): Table 'joblogs' already exists
+mysql>
+mysql> -- ============================================================
+mysql> -- PART 2: SAMPLE DATA
+mysql> -- ============================================================
+mysql>
+mysql> -- Admin account is a row in Users with role = 'Admin'.
+mysql> -- Demo admin login: admin@jobportal.com / Admin@123
+mysql> INSERT INTO Users (full_name, email, password, role) VALUES
+    -> ('Rahul Sharma', 'rahul@gmail.com', 'rahul123', 'JobSeeker'),
+    -> ('Nikhil Kumar', 'nikhil@gmail.com', 'nikhil123', 'JobSeeker'),
+    -> ('Balu Kumar', 'balu@gmail.com', 'balu123', 'Employer'),
+    -> ('Prasanna Rao', 'prasanna@gmail.com', 'prasanna123', 'Employer'),
+    -> ('Portal Administrator', 'admin@jobportal.com', 'Admin@123', 'Admin'),
+    -> ('Priya Reddy', 'priya@gmail.com', 'priya123', 'JobSeeker'),
+    -> ('Sandeep Varma', 'sandeep@gmail.com', 'sandeep123', 'Employer');
+ERROR 1062 (23000): Duplicate entry 'rahul@gmail.com' for key 'email'
+mysql>
+mysql> INSERT INTO Employers
+    -> (user_id, company_name, company_description, company_location) VALUES
+    -> (3, 'Tech Solutions Ltd', 'Software development and IT services company.', 'Hyderabad'),
+    -> (4, 'Innovate IT Pvt Ltd', 'IT consulting and cloud solutions company.', 'Bangalore'),
+    -> (7, 'NextGen Analytics', 'Data analytics and business intelligence company.', 'Visakhapatnam');
+ERROR 1062 (23000): Duplicate entry '3' for key 'user_id'
+mysql>
+mysql> INSERT INTO JobSeekers
+    -> (user_id, skills, experience_years, resume_path) VALUES
+    -> (1, 'Java, MySQL, Spring Boot', 2, 'rahul_resume.pdf'),
+    -> (2, 'Python, SQL, Data Analytics', 1, 'nikhil_resume.pdf'),
+    -> (6, 'HTML, CSS, JavaScript, React', 0, 'priya_resume.pdf');
+ERROR 1062 (23000): Duplicate entry '1' for key 'user_id'
+mysql>
+mysql> INSERT INTO Categories (category_name) VALUES
+    -> ('Software Development'),
+    -> ('Web Development'),
+    -> ('Data Science'),
+    -> ('Cyber Security'),
+    -> ('Cloud Computing'),
+    -> ('Business Analysis');
+ERROR 1062 (23000): Duplicate entry 'Software Development' for key 'category_name'
+mysql>
+mysql> INSERT INTO Jobs
+    -> (employer_id, job_title, job_description, salary, location, job_type) VALUES
+    -> (1, 'Java Developer', 'Develop and maintain Java applications.', 700000, 'Hyderabad', 'Full-Time'),
+    -> (1, 'Frontend Developer', 'Build responsive user interfaces using React.', 600000, 'Hyderabad', 'Full-Time'),
+    -> (2, 'Data Analyst', 'Analyze datasets and prepare business reports.', 650000, 'Bangalore', 'Full-Time'),
+    -> (2, 'Cloud Engineer Intern', 'Assist with cloud infrastructure and AWS resources.', 240000, 'Pune', 'Internship'),
+    -> (1, 'Cyber Security Intern', 'Support security testing and vulnerability reviews.', 200000, 'Chennai', 'Internship'),
+    -> (3, 'Business Analyst', 'Gather requirements and analyze business processes.', 550000, 'Visakhapatnam', 'Full-Time'),
+    -> (3, 'Python Developer', 'Develop Python services and data tools.', 720000, 'Visakhapatnam', 'Full-Time'),
+    -> (2, 'SQL Support Associate', 'Write SQL queries and support database operations.', 400000, 'Bangalore', 'Part-Time');
+Query OK, 8 rows affected (0.00 sec)
+Records: 8  Duplicates: 0  Warnings: 0
+
+mysql>
+mysql> INSERT INTO JobCategory (job_id, category_id) VALUES
+    -> (1, 1),
+    -> (2, 2),
+    -> (3, 3),
+    -> (4, 5),
+    -> (5, 4),
+    -> (6, 6),
+    -> (7, 1),
+    -> (7, 3),
+    -> (8, 1);
+ERROR 1062 (23000): Duplicate entry '1-1' for key 'PRIMARY'
+mysql>
+mysql> -- Applications are linked to JobSeekers, not directly to Users.
+mysql>
+mysql> INSERT INTO Applications
+    ->     (job_id, seeker_id, application_date, status)
+    -> VALUES
+    ->     (1, 1, CURDATE(), 'Applied'),
+    ->     (2, 1, CURDATE(), 'Shortlisted'),
+    ->     (3, 2, CURDATE(), 'Applied'),
+    ->     (4, 2, CURDATE(), 'Selected'),
+    ->     (5, 1, CURDATE(), 'Applied'),
+    ->     (6, 3, CURDATE(), 'Pending'),
+    ->     (7, 3, CURDATE(), 'Applied'),
+    ->     (8, 2, CURDATE(), 'Rejected');
+ERROR 1644 (45000): Already applied for this job
+mysql>     show tables;
++-----------------------+
+| Tables_in_job_portal  |
++-----------------------+
+| applications          |
+| categories            |
+| employers             |
+| jobcategory           |
+| joblogs               |
+| jobs                  |
+| jobseekers            |
+| users                 |
+| vw_admin_users        |
+| vw_application_status |
+| vw_available_jobs     |
++-----------------------+
+11 rows in set (0.00 sec)
+
+mysql> select*from categories;
++-------------+----------------------+
+| category_id | category_name        |
++-------------+----------------------+
+|           6 | Business Analysis    |
+|           5 | Cloud Computing      |
+|           4 | Cyber Security       |
+|           3 | Data Science         |
+|           1 | Software Development |
+|           2 | Web Development      |
++-------------+----------------------+
+6 rows in set (0.00 sec)
+
+mysql> select*from applications;
++----------------+--------+-----------+------------------+-------------+
+| application_id | job_id | seeker_id | application_date | status      |
++----------------+--------+-----------+------------------+-------------+
+|              1 |      1 |         1 | 2026-10-23       | Applied     |
+|              2 |      2 |         1 | 2026-10-23       | Shortlisted |
+|              3 |      3 |         2 | 2026-10-23       | Applied     |
+|              4 |      4 |         2 | 2026-10-23       | Selected    |
+|              5 |      5 |         1 | 2026-10-23       | Applied     |
+|              6 |      6 |         3 | 2026-10-23       | Pending     |
+|              7 |      7 |         3 | 2026-10-23       | Applied     |
+|              8 |      8 |         2 | 2026-10-23       | Rejected    |
++----------------+--------+-----------+------------------+-------------+
+8 rows in set (0.00 sec)
+
+mysql> select*from employers;
++-------------+---------+---------------------+---------------------------------------------------+------------------+
+| employer_id | user_id | company_name        | company_description                               | company_location |
++-------------+---------+---------------------+---------------------------------------------------+------------------+
+|           1 |       3 | Tech Solutions Ltd  | Software development and IT services company.     | Hyderabad        |
+|           2 |       4 | Innovate IT Pvt Ltd | IT consulting and cloud solutions company.        | Bangalore        |
+|           3 |       7 | NextGen Analytics   | Data analytics and business intelligence company. | Visakhapatnam    |
++-------------+---------+---------------------+---------------------------------------------------+------------------+
+3 rows in set (0.00 sec)
+
+mysql> select*from jobcategory;
++--------+-------------+
+| job_id | category_id |
++--------+-------------+
+|      1 |           1 |
+|      7 |           1 |
+|      8 |           1 |
+|      2 |           2 |
+|      3 |           3 |
+|      7 |           3 |
+|      5 |           4 |
+|      4 |           5 |
+|      6 |           6 |
++--------+-------------+
+9 rows in set (0.00 sec)
+
+mysql>
+mysql> ALTER TABLE JobLogs
+    -> ADD COLUMN log_date DATETIME DEFAULT CURRENT_TIMESTAMP;
+ERROR 1060 (42S21): Duplicate column name 'log_date'
+mysql>
+mysql>
+mysql> INSERT INTO JobLogs (job_id, action, log_date)
+    -> VALUES
+    -> (1, 'Job Created', NOW()),
+    -> (2, 'Job Created', NOW()),
+    -> (3, 'Job Created', NOW()),
+    -> (4, 'Job Created', NOW()),
+    -> (5, 'Job Created', NOW()),
+    -> (6, 'Job Created', NOW()),
+    -> (7, 'Job Created', NOW()),
+    -> (8, 'Job Created', NOW());
+Query OK, 8 rows affected (0.00 sec)
+Records: 8  Duplicates: 0  Warnings: 0
+
+mysql>
+mysql> select*from joblogs;
++--------+--------+-------------+---------------------+---------------------+
+| log_id | job_id | action      | log_time            | log_date            |
++--------+--------+-------------+---------------------+---------------------+
+|      1 |      1 | Job Created | 2026-10-23 12:19:44 | 2026-10-23 12:19:44 |
+|      2 |      2 | Job Created | 2026-10-23 12:19:44 | 2026-10-23 12:19:44 |
+|      3 |      3 | Job Created | 2026-10-23 12:19:44 | 2026-10-23 12:19:44 |
+|      4 |      4 | Job Created | 2026-10-23 12:19:44 | 2026-10-23 12:19:44 |
+|      5 |      5 | Job Created | 2026-10-23 12:19:44 | 2026-10-23 12:19:44 |
+|      6 |      6 | Job Created | 2026-10-23 12:19:44 | 2026-10-23 12:19:44 |
+|      7 |      7 | Job Created | 2026-10-23 12:19:44 | 2026-10-23 12:19:44 |
+|      8 |      8 | Job Created | 2026-10-23 12:19:44 | 2026-10-23 12:19:44 |
+|      9 |      1 | JOB_POSTED  | 2026-10-23 12:27:40 | 2026-10-23 12:27:40 |
+|     10 |      2 | JOB_POSTED  | 2026-10-23 12:27:40 | 2026-10-23 12:27:40 |
+|     11 |      3 | JOB_POSTED  | 2026-10-23 12:27:40 | 2026-10-23 12:27:40 |
+|     12 |      4 | JOB_POSTED  | 2026-10-23 12:27:40 | 2026-10-23 12:27:40 |
+|     13 |      5 | JOB_POSTED  | 2026-10-23 12:27:40 | 2026-10-23 12:27:40 |
+|     14 |      6 | JOB_POSTED  | 2026-10-23 12:27:40 | 2026-10-23 12:27:40 |
+|     15 |      7 | JOB_POSTED  | 2026-10-23 12:27:40 | 2026-10-23 12:27:40 |
+|     16 |      8 | JOB_POSTED  | 2026-10-23 12:27:40 | 2026-10-23 12:27:40 |
+|     17 |      9 | JOB_POSTED  | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     18 |     10 | JOB_POSTED  | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     19 |     11 | JOB_POSTED  | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     20 |     12 | JOB_POSTED  | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     21 |     13 | JOB_POSTED  | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     22 |     14 | JOB_POSTED  | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     23 |     15 | JOB_POSTED  | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     24 |     16 | JOB_POSTED  | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     25 |      1 | Job Created | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     26 |      2 | Job Created | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     27 |      3 | Job Created | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     28 |      4 | Job Created | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     29 |      5 | Job Created | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     30 |      6 | Job Created | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     31 |      7 | Job Created | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
+|     32 |      8 | Job Created | 2026-10-23 16:21:45 | 2026-10-23 16:21:45 |
++--------+--------+-------------+---------------------+---------------------+
+32 rows in set (0.00 sec)
+
+mysql> select*from jobs;
++--------+-------------+-----------------------+-----------------------------------------------------+-----------+---------------+------------+---------------------+
+| job_id | employer_id | job_title             | job_description                                     | salary    | location      | job_type   | posted_date         |
++--------+-------------+-----------------------+-----------------------------------------------------+-----------+---------------+------------+---------------------+
+|      1 |           1 | Java Developer        | Develop and maintain Java applications.             | 700000.00 | Hyderabad     | Full-Time  | 2026-10-23 12:03:10 |
+|      2 |           1 | Frontend Developer    | Build responsive user interfaces using React.       | 600000.00 | Hyderabad     | Full-Time  | 2026-10-23 12:03:10 |
+|      3 |           2 | Data Analyst          | Analyze datasets and prepare business reports.      | 650000.00 | Bangalore     | Full-Time  | 2026-10-23 12:03:10 |
+|      4 |           2 | Cloud Engineer Intern | Assist with cloud infrastructure and AWS resources. | 240000.00 | Pune          | Internship | 2026-10-23 12:03:10 |
+|      5 |           1 | Cyber Security Intern | Support security testing and vulnerability reviews. | 200000.00 | Chennai       | Internship | 2026-10-23 12:03:10 |
+|      6 |           3 | Business Analyst      | Gather requirements and analyze business processes. | 550000.00 | Visakhapatnam | Full-Time  | 2026-10-23 12:03:10 |
+|      7 |           3 | Python Developer      | Develop Python services and data tools.             | 720000.00 | Visakhapatnam | Full-Time  | 2026-10-23 12:03:10 |
+|      8 |           2 | SQL Support Associate | Write SQL queries and support database operations.  | 400000.00 | Bangalore     | Part-Time  | 2026-10-23 12:03:10 |
+|      9 |           1 | Java Developer        | Develop and maintain Java applications.             | 700000.00 | Hyderabad     | Full-Time  | 2026-10-23 16:21:45 |
+|     10 |           1 | Frontend Developer    | Build responsive user interfaces using React.       | 600000.00 | Hyderabad     | Full-Time  | 2026-10-23 16:21:45 |
+|     11 |           2 | Data Analyst          | Analyze datasets and prepare business reports.      | 650000.00 | Bangalore     | Full-Time  | 2026-10-23 16:21:45 |
+|     12 |           2 | Cloud Engineer Intern | Assist with cloud infrastructure and AWS resources. | 240000.00 | Pune          | Internship | 2026-10-23 16:21:45 |
+|     13 |           1 | Cyber Security Intern | Support security testing and vulnerability reviews. | 200000.00 | Chennai       | Internship | 2026-10-23 16:21:45 |
+|     14 |           3 | Business Analyst      | Gather requirements and analyze business processes. | 550000.00 | Visakhapatnam | Full-Time  | 2026-10-23 16:21:45 |
+|     15 |           3 | Python Developer      | Develop Python services and data tools.             | 720000.00 | Visakhapatnam | Full-Time  | 2026-10-23 16:21:45 |
+|     16 |           2 | SQL Support Associate | Write SQL queries and support database operations.  | 400000.00 | Bangalore     | Part-Time  | 2026-10-23 16:21:45 |
++--------+-------------+-----------------------+-----------------------------------------------------+-----------+---------------+------------+---------------------+
+16 rows in set (0.00 sec)
+
+mysql> select*from jobseekers;
++-----------+---------+------------------------------+------------------+-------------------+
+| seeker_id | user_id | skills                       | experience_years | resume_path       |
++-----------+---------+------------------------------+------------------+-------------------+
+|         1 |       1 | Java, MySQL, Spring Boot     |                2 | rahul_resume.pdf  |
+|         2 |       2 | Python, SQL, Data Analytics  |                1 | nikhil_resume.pdf |
+|         3 |       6 | HTML, CSS, JavaScript, React |                0 | priya_resume.pdf  |
++-----------+---------+------------------------------+------------------+-------------------+
+3 rows in set (0.00 sec)
+
+mysql> select*from users;
++---------+----------------------+---------------------+-------------+-----------+---------------------+
+| user_id | full_name            | email               | password    | role      | created_at          |
++---------+----------------------+---------------------+-------------+-----------+---------------------+
+|       1 | Rahul Sharma         | rahul@gmail.com     | rahul123    | JobSeeker | 2026-10-23 11:56:55 |
+|       2 | Nikhil Kumar         | nikhil@gmail.com    | nikhil123   | JobSeeker | 2026-10-23 11:56:55 |
+|       3 | Balu Kumar           | balu@gmail.com      | balu123     | Employer  | 2026-10-23 11:56:55 |
+|       4 | Prasanna Rao         | prasanna@gmail.com  | prasanna123 | Employer  | 2026-10-23 11:56:55 |
+|       5 | Portal Administrator | admin@jobportal.com | Admin@123   | Admin     | 2026-10-23 11:56:55 |
+|       6 | Priya Reddy          | priya@gmail.com     | priya123    | JobSeeker | 2026-10-23 11:56:55 |
+|       7 | Sandeep Varma        | sandeep@gmail.com   | sandeep123  | Employer  | 2026-10-23 11:56:55 |
++---------+----------------------+---------------------+-------------+-----------+---------------------+
+7 rows in set (0.00 sec)
+
+mysql>
+mysql> -- PART 3: INDEXES
+mysql> -- ============================================================
+mysql>
+mysql> CREATE INDEX idx_jobs_title ON Jobs(job_title);
+ERROR 1061 (42000): Duplicate key name 'idx_jobs_title'
+mysql> CREATE INDEX idx_jobs_location ON Jobs(location);
+ERROR 1061 (42000): Duplicate key name 'idx_jobs_location'
+mysql> CREATE INDEX idx_jobs_employer ON Jobs(employer_id);
+ERROR 1061 (42000): Duplicate key name 'idx_jobs_employer'
+mysql> CREATE INDEX idx_applications_seeker ON Applications(seeker_id);
+ERROR 1061 (42000): Duplicate key name 'idx_applications_seeker'
+mysql> CREATE INDEX idx_applications_status ON Applications(status);
+ERROR 1061 (42000): Duplicate key name 'idx_applications_status'
+mysql> -- ============================================================
+mysql> -- PART 4: VIEWS
+mysql> -- ============================================================
+mysql>
+mysql> CREATE VIEW vw_available_jobs AS
+    -> SELECT
+    ->     j.job_id,
+    ->     j.job_title,
+    ->     e.company_name,
+    ->     e.company_location AS company_location,
+    ->     j.location AS job_location,
+    ->     j.salary,
+    ->     j.job_type,
+    ->     j.posted_date
+    -> FROM Jobs j
+    -> JOIN Employers e ON j.employer_id = e.employer_id;
+ERROR 1050 (42S01): Table 'vw_available_jobs' already exists
+mysql>
+mysql> CREATE VIEW vw_application_status AS
+    -> SELECT
+    ->     a.application_id,
+    ->     u.full_name AS job_seeker,
+    ->     j.job_title,
+    ->     e.company_name,
+    ->     a.application_date,
+    ->     a.status
+    -> FROM Applications a
+    -> JOIN JobSeekers js ON a.seeker_id = js.seeker_id
+    -> JOIN Users u ON js.user_id = u.user_id
+    -> JOIN Jobs j ON a.job_id = j.job_id
+    -> JOIN Employers e ON j.employer_id = e.employer_id;
+ERROR 1050 (42S01): Table 'vw_application_status' already exists
+mysql>
+mysql> CREATE VIEW vw_admin_users AS
+    -> SELECT user_id, full_name, email, role, created_at
+    -> FROM Users
+    -> WHERE role = 'Admin';
+ERROR 1050 (42S01): Table 'vw_admin_users' already exists
+mysql>
+mysql> -- ============================================================
+mysql> -- PART 5: TRIGGERS
+mysql> -- ============================================================
+mysql>
+mysql> DELIMITER $$
+mysql>
+mysql> CREATE TRIGGER trg_prevent_duplicate_application
+    -> BEFORE INSERT ON Applications
+    -> FOR EACH ROW
+    -> BEGIN
+    ->     IF EXISTS (
+    ->         SELECT 1
+    ->         FROM Applications
+    ->         WHERE job_id = NEW.job_id
+    ->           AND seeker_id = NEW.seeker_id
+    ->     ) THEN
+    ->         SIGNAL SQLSTATE '45000'
+    ->             SET MESSAGE_TEXT = 'Already applied for this job';
+    ->     END IF;
+    -> END$$
+ERROR 1359 (HY000): Trigger already exists
+mysql>
+mysql> DELIMITER $$
+mysql>
+mysql> CREATE TRIGGER trg_job_insert
+    -> AFTER INSERT ON Jobs
+    -> FOR EACH ROW
+    -> BEGIN
+    ->     INSERT INTO JobLogs(job_id, action)
+    ->     VALUES (NEW.job_id, 'JOB_POSTED');
+    -> END$$
+ERROR 1359 (HY000): Trigger already exists
+mysql>
+mysql> DELIMITER ;
+mysql>
+mysql> -- Add historical logs for the sample jobs (the trigger was created
+mysql> -- after the sample Jobs were inserted, so these rows are not duplicates).
+mysql> INSERT INTO JobLogs (job_id, action) VALUES
+    -> (1, 'JOB_POSTED'),
+    -> (2, 'JOB_POSTED'),
+    -> (3, 'JOB_POSTED'),
+    -> (4, 'JOB_POSTED'),
+    -> (5, 'JOB_POSTED'),
+    -> (6, 'JOB_POSTED'),
+    -> (7, 'JOB_POSTED'),
+    -> (8, 'JOB_POSTED');
+Query OK, 8 rows affected (0.00 sec)
+Records: 8  Duplicates: 0  Warnings: 0
+
+mysql>
+mysql> -- ============================================================
+mysql> -- PART 6: STORED PROCEDURE
+mysql> -- ============================================================
+mysql>
+mysql> DELIMITER $$
+mysql>
+mysql> CREATE PROCEDURE AddJob(
+    ->     IN p_employer_id INT,
+    ->     IN p_title VARCHAR(150),
+    ->     IN p_description TEXT,
+    ->     IN p_salary DECIMAL(10,2),
+    ->     IN p_location VARCHAR(100),
+    ->     IN p_type VARCHAR(20)
+    -> )
+    -> BEGIN
+    ->     INSERT INTO Jobs
+    ->         (employer_id, job_title, job_description, salary, location, job_type)
+    ->     VALUES
+    ->         (p_employer_id, p_title, p_description, p_salary, p_location, p_type);
+    -> END$$
+ERROR 1304 (42000): PROCEDURE AddJob already exists
+mysql>
+mysql> DELIMITER ;
+mysql> -- ============================================================
+mysql> -- PART 7: SAMPLE QUERIES
+mysql> -- ============================================================
+mysql>
+mysql> -- Show all users, including the admin account.
+mysql> SELECT user_id, full_name, email, role FROM Users;
++---------+----------------------+---------------------+-----------+
+| user_id | full_name            | email               | role      |
++---------+----------------------+---------------------+-----------+
+|       1 | Rahul Sharma         | rahul@gmail.com     | JobSeeker |
+|       2 | Nikhil Kumar         | nikhil@gmail.com    | JobSeeker |
+|       3 | Balu Kumar           | balu@gmail.com      | Employer  |
+|       4 | Prasanna Rao         | prasanna@gmail.com  | Employer  |
+|       5 | Portal Administrator | admin@jobportal.com | Admin     |
+|       6 | Priya Reddy          | priya@gmail.com     | JobSeeker |
+|       7 | Sandeep Varma        | sandeep@gmail.com   | Employer  |
++---------+----------------------+---------------------+-----------+
+7 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Show the admin account.
+mysql> SELECT user_id, full_name, email, role
+    -> FROM Users
+    -> WHERE role = 'Admin';
++---------+----------------------+---------------------+-------+
+| user_id | full_name            | email               | role  |
++---------+----------------------+---------------------+-------+
+|       5 | Portal Administrator | admin@jobportal.com | Admin |
++---------+----------------------+---------------------+-------+
+1 row in set (0.00 sec)
+
+mysql>
+mysql> -- Show employer/company profiles.
+mysql> SELECT * FROM Employers;
++-------------+---------+---------------------+---------------------------------------------------+------------------+
+| employer_id | user_id | company_name        | company_description                               | company_location |
++-------------+---------+---------------------+---------------------------------------------------+------------------+
+|           1 |       3 | Tech Solutions Ltd  | Software development and IT services company.     | Hyderabad        |
+|           2 |       4 | Innovate IT Pvt Ltd | IT consulting and cloud solutions company.        | Bangalore        |
+|           3 |       7 | NextGen Analytics   | Data analytics and business intelligence company. | Visakhapatnam    |
++-------------+---------+---------------------+---------------------------------------------------+------------------+
+3 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Show job seeker profiles.
+mysql> SELECT * FROM JobSeekers;
++-----------+---------+------------------------------+------------------+-------------------+
+| seeker_id | user_id | skills                       | experience_years | resume_path       |
++-----------+---------+------------------------------+------------------+-------------------+
+|         1 |       1 | Java, MySQL, Spring Boot     |                2 | rahul_resume.pdf  |
+|         2 |       2 | Python, SQL, Data Analytics  |                1 | nikhil_resume.pdf |
+|         3 |       6 | HTML, CSS, JavaScript, React |                0 | priya_resume.pdf  |
++-----------+---------+------------------------------+------------------+-------------------+
+3 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Show all jobs with company names.
+mysql> SELECT * FROM vw_available_jobs ORDER BY job_id;
++--------+-----------------------+---------------------+------------------+---------------+-----------+------------+---------------------+
+| job_id | job_title             | company_name        | company_location | job_location  | salary    | job_type   | posted_date         |
++--------+-----------------------+---------------------+------------------+---------------+-----------+------------+---------------------+
+|      1 | Java Developer        | Tech Solutions Ltd  | Hyderabad        | Hyderabad     | 700000.00 | Full-Time  | 2026-10-23 12:03:10 |
+|      2 | Frontend Developer    | Tech Solutions Ltd  | Hyderabad        | Hyderabad     | 600000.00 | Full-Time  | 2026-10-23 12:03:10 |
+|      3 | Data Analyst          | Innovate IT Pvt Ltd | Bangalore        | Bangalore     | 650000.00 | Full-Time  | 2026-10-23 12:03:10 |
+|      4 | Cloud Engineer Intern | Innovate IT Pvt Ltd | Bangalore        | Pune          | 240000.00 | Internship | 2026-10-23 12:03:10 |
+|      5 | Cyber Security Intern | Tech Solutions Ltd  | Hyderabad        | Chennai       | 200000.00 | Internship | 2026-10-23 12:03:10 |
+|      6 | Business Analyst      | NextGen Analytics   | Visakhapatnam    | Visakhapatnam | 550000.00 | Full-Time  | 2026-10-23 12:03:10 |
+|      7 | Python Developer      | NextGen Analytics   | Visakhapatnam    | Visakhapatnam | 720000.00 | Full-Time  | 2026-10-23 12:03:10 |
+|      8 | SQL Support Associate | Innovate IT Pvt Ltd | Bangalore        | Bangalore     | 400000.00 | Part-Time  | 2026-10-23 12:03:10 |
+|      9 | Java Developer        | Tech Solutions Ltd  | Hyderabad        | Hyderabad     | 700000.00 | Full-Time  | 2026-10-23 16:21:45 |
+|     10 | Frontend Developer    | Tech Solutions Ltd  | Hyderabad        | Hyderabad     | 600000.00 | Full-Time  | 2026-10-23 16:21:45 |
+|     11 | Data Analyst          | Innovate IT Pvt Ltd | Bangalore        | Bangalore     | 650000.00 | Full-Time  | 2026-10-23 16:21:45 |
+|     12 | Cloud Engineer Intern | Innovate IT Pvt Ltd | Bangalore        | Pune          | 240000.00 | Internship | 2026-10-23 16:21:45 |
+|     13 | Cyber Security Intern | Tech Solutions Ltd  | Hyderabad        | Chennai       | 200000.00 | Internship | 2026-10-23 16:21:45 |
+|     14 | Business Analyst      | NextGen Analytics   | Visakhapatnam    | Visakhapatnam | 550000.00 | Full-Time  | 2026-10-23 16:21:45 |
+|     15 | Python Developer      | NextGen Analytics   | Visakhapatnam    | Visakhapatnam | 720000.00 | Full-Time  | 2026-10-23 16:21:45 |
+|     16 | SQL Support Associate | Innovate IT Pvt Ltd | Bangalore        | Bangalore     | 400000.00 | Part-Time  | 2026-10-23 16:21:45 |
++--------+-----------------------+---------------------+------------------+---------------+-----------+------------+---------------------+
+16 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Show all applications and their status.
+mysql> SELECT * FROM vw_application_status ORDER BY application_id;
++----------------+--------------+-----------------------+---------------------+------------------+-------------+
+| application_id | job_seeker   | job_title             | company_name        | application_date | status      |
++----------------+--------------+-----------------------+---------------------+------------------+-------------+
+|              1 | Rahul Sharma | Java Developer        | Tech Solutions Ltd  | 2026-10-23       | Applied     |
+|              2 | Rahul Sharma | Frontend Developer    | Tech Solutions Ltd  | 2026-10-23       | Shortlisted |
+|              3 | Nikhil Kumar | Data Analyst          | Innovate IT Pvt Ltd | 2026-10-23       | Applied     |
+|              4 | Nikhil Kumar | Cloud Engineer Intern | Innovate IT Pvt Ltd | 2026-10-23       | Selected    |
+|              5 | Rahul Sharma | Cyber Security Intern | Tech Solutions Ltd  | 2026-10-23       | Applied     |
+|              6 | Priya Reddy  | Business Analyst      | NextGen Analytics   | 2026-10-23       | Pending     |
+|              7 | Priya Reddy  | Python Developer      | NextGen Analytics   | 2026-10-23       | Applied     |
+|              8 | Nikhil Kumar | SQL Support Associate | Innovate IT Pvt Ltd | 2026-10-23       | Rejected    |
++----------------+--------------+-----------------------+---------------------+------------------+-------------+
+8 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Count jobs by company.
+mysql> SELECT e.company_name, COUNT(j.job_id) AS total_jobs
+    -> FROM Employers e
+    -> LEFT JOIN Jobs j ON e.employer_id = j.employer_id
+    -> GROUP BY e.employer_id, e.company_name;
++---------------------+------------+
+| company_name        | total_jobs |
++---------------------+------------+
+| Tech Solutions Ltd  |          6 |
+| Innovate IT Pvt Ltd |          6 |
+| NextGen Analytics   |          4 |
++---------------------+------------+
+3 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Count applications by status.
+mysql> SELECT status, COUNT(*) AS total_applications
+    -> FROM Applications
+    -> GROUP BY status;
++-------------+--------------------+
+| status      | total_applications |
++-------------+--------------------+
+| Applied     |                  4 |
+| Pending     |                  1 |
+| Shortlisted |                  1 |
+| Rejected    |                  1 |
+| Selected    |                  1 |
++-------------+--------------------+
+5 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Show jobs in a selected location (example: Hyderabad).
+mysql> SELECT * FROM vw_available_jobs
+    -> WHERE job_location = 'Hyderabad';
++--------+--------------------+--------------------+------------------+--------------+-----------+-----------+---------------------+
+| job_id | job_title          | company_name       | company_location | job_location | salary    | job_type  | posted_date         |
++--------+--------------------+--------------------+------------------+--------------+-----------+-----------+---------------------+
+|      1 | Java Developer     | Tech Solutions Ltd | Hyderabad        | Hyderabad    | 700000.00 | Full-Time | 2026-10-23 12:03:10 |
+|      2 | Frontend Developer | Tech Solutions Ltd | Hyderabad        | Hyderabad    | 600000.00 | Full-Time | 2026-10-23 12:03:10 |
+|      9 | Java Developer     | Tech Solutions Ltd | Hyderabad        | Hyderabad    | 700000.00 | Full-Time | 2026-10-23 16:21:45 |
+|     10 | Frontend Developer | Tech Solutions Ltd | Hyderabad        | Hyderabad    | 600000.00 | Full-Time | 2026-10-23 16:21:45 |
++--------+--------------------+--------------------+------------------+--------------+-----------+-----------+---------------------+
+4 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Show categories assigned to each job.
+mysql> SELECT j.job_title, c.category_name
+    -> FROM JobCategory jc
+    -> JOIN Jobs j ON jc.job_id = j.job_id
+    -> JOIN Categories c ON jc.category_id = c.category_id
+    -> ORDER BY j.job_id;
++-----------------------+----------------------+
+| job_title             | category_name        |
++-----------------------+----------------------+
+| Java Developer        | Software Development |
+| Frontend Developer    | Web Development      |
+| Data Analyst          | Data Science         |
+| Cloud Engineer Intern | Cloud Computing      |
+| Cyber Security Intern | Cyber Security       |
+| Business Analyst      | Business Analysis    |
+| Python Developer      | Data Science         |
+| Python Developer      | Software Development |
+| SQL Support Associate | Software Development |
++-----------------------+----------------------+
+9 rows in set (0.00 sec)
+
+mysql>
+mysql> -- ============================================================
+mysql> -- END OF PROJECT
+mysql> -- ============================================================
+mysql>
