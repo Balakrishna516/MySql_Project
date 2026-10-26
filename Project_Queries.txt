@@ -654,8 +654,372 @@ mysql> SELECT j.job_title, c.category_name
 +-----------------------+----------------------+
 9 rows in set (0.00 sec)
 
+mysql> -- Q1. Display all users
+mysql> SELECT full_name, email, role
+    -> FROM Users;
++----------------------+---------------------+-----------+
+| full_name            | email               | role      |
++----------------------+---------------------+-----------+
+| Rahul Sharma         | rahul@gmail.com     | JobSeeker |
+| Nikhil Kumar         | nikhil@gmail.com    | JobSeeker |
+| Balu Kumar           | balu@gmail.com      | Employer  |
+| Prasanna Rao         | prasanna@gmail.com  | Employer  |
+| Portal Administrator | admin@jobportal.com | Admin     |
+| Priya Reddy          | priya@gmail.com     | JobSeeker |
+| Sandeep Varma        | sandeep@gmail.com   | Employer  |
++----------------------+---------------------+-----------+
+7 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q2. Display job titles and salaries
+mysql> SELECT job_title, salary
+    -> FROM Jobs;
++-----------------------+-----------+
+| job_title             | salary    |
++-----------------------+-----------+
+| Java Developer        | 700000.00 |
+| Frontend Developer    | 600000.00 |
+| Data Analyst          | 650000.00 |
+| Cloud Engineer Intern | 240000.00 |
+| Cyber Security Intern | 200000.00 |
+| Business Analyst      | 550000.00 |
+| Python Developer      | 720000.00 |
+| SQL Support Associate | 400000.00 |
+| Java Developer        | 700000.00 |
+| Frontend Developer    | 600000.00 |
+| Data Analyst          | 650000.00 |
+| Cloud Engineer Intern | 240000.00 |
+| Cyber Security Intern | 200000.00 |
+| Business Analyst      | 550000.00 |
+| Python Developer      | 720000.00 |
+| SQL Support Associate | 400000.00 |
++-----------------------+-----------+
+16 rows in set (0.01 sec)
+
+mysql>
+mysql> -- Q3. Display all job categories
+mysql> SELECT category_id, category_name
+    -> FROM Categories
+    -> ORDER BY category_id;
++-------------+----------------------+
+| category_id | category_name        |
++-------------+----------------------+
+|           1 | Software Development |
+|           2 | Web Development      |
+|           3 | Data Science         |
+|           4 | Cyber Security       |
+|           5 | Cloud Computing      |
+|           6 | Business Analysis    |
++-------------+----------------------+
+6 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q4. Display job seekers and their skills
+mysql> SELECT u.full_name, js.skills
+    -> FROM Users u
+    -> JOIN JobSeekers js ON u.user_id = js.user_id;
++--------------+------------------------------+
+| full_name    | skills                       |
++--------------+------------------------------+
+| Rahul Sharma | Java, MySQL, Spring Boot     |
+| Nikhil Kumar | Python, SQL, Data Analytics  |
+| Priya Reddy  | HTML, CSS, JavaScript, React |
++--------------+------------------------------+
+3 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q5. Display all available job types
+mysql> SELECT DISTINCT job_type
+    -> FROM Jobs
+    -> ORDER BY job_type;
++------------+
+| job_type   |
++------------+
+| Full-Time  |
+| Part-Time  |
+| Internship |
++------------+
+3 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q6. Display jobs located in Hyderabad
+mysql> SELECT job_id, job_title, location, salary
+    -> FROM Jobs
+    -> WHERE location = 'Hyderabad'
+    -> ORDER BY job_id;
++--------+--------------------+-----------+-----------+
+| job_id | job_title          | location  | salary    |
++--------+--------------------+-----------+-----------+
+|      1 | Java Developer     | Hyderabad | 700000.00 |
+|      2 | Frontend Developer | Hyderabad | 600000.00 |
+|      9 | Java Developer     | Hyderabad | 700000.00 |
+|     10 | Frontend Developer | Hyderabad | 600000.00 |
++--------+--------------------+-----------+-----------+
+4 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q7. Display jobs with salary greater than 600000
+mysql> SELECT job_title, salary
+    -> FROM Jobs
+    -> WHERE salary > 600000
+    -> ORDER BY salary DESC;
++------------------+-----------+
+| job_title        | salary    |
++------------------+-----------+
+| Python Developer | 720000.00 |
+| Python Developer | 720000.00 |
+| Java Developer   | 700000.00 |
+| Java Developer   | 700000.00 |
+| Data Analyst     | 650000.00 |
+| Data Analyst     | 650000.00 |
++------------------+-----------+
+6 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q8. Display all internship jobs
+mysql> SELECT job_title, location, salary
+    -> FROM Jobs
+    -> WHERE job_type = 'Internship'
+    -> ORDER BY job_id;
++-----------------------+----------+-----------+
+| job_title             | location | salary    |
++-----------------------+----------+-----------+
+| Cloud Engineer Intern | Pune     | 240000.00 |
+| Cyber Security Intern | Chennai  | 200000.00 |
+| Cloud Engineer Intern | Pune     | 240000.00 |
+| Cyber Security Intern | Chennai  | 200000.00 |
++-----------------------+----------+-----------+
+4 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q9. Display job seekers with more than one year of experience
+mysql> SELECT u.full_name, js.experience_years
+    -> FROM Users u
+    -> JOIN JobSeekers js ON u.user_id = js.user_id
+    -> WHERE js.experience_years > 1;
++--------------+------------------+
+| full_name    | experience_years |
++--------------+------------------+
+| Rahul Sharma |                2 |
++--------------+------------------+
+1 row in set (0.00 sec)
+
+mysql>
+mysql> -- Q10. Display applications with Applied status
+mysql> SELECT application_id, job_id, seeker_id, status
+    -> FROM Applications
+    -> WHERE status = 'Applied'
+    -> ORDER BY application_id;
++----------------+--------+-----------+---------+
+| application_id | job_id | seeker_id | status  |
++----------------+--------+-----------+---------+
+|              1 |      1 |         1 | Applied |
+|              3 |      3 |         2 | Applied |
+|              5 |      5 |         1 | Applied |
+|              7 |      7 |         3 | Applied |
++----------------+--------+-----------+---------+
+4 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q11. Display the five highest-paying jobs
+mysql> SELECT job_title, location, salary
+    -> FROM Jobs
+    -> ORDER BY salary DESC
+    -> LIMIT 5;
++------------------+---------------+-----------+
+| job_title        | location      | salary    |
++------------------+---------------+-----------+
+| Python Developer | Visakhapatnam | 720000.00 |
+| Python Developer | Visakhapatnam | 720000.00 |
+| Java Developer   | Hyderabad     | 700000.00 |
+| Java Developer   | Hyderabad     | 700000.00 |
+| Data Analyst     | Bangalore     | 650000.00 |
++------------------+---------------+-----------+
+5 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q12. Count users according to their roles
+mysql> SELECT role, COUNT(*) AS total_users
+    -> FROM Users
+    -> GROUP BY role
+    -> ORDER BY role;
++-----------+-------------+
+| role      | total_users |
++-----------+-------------+
+| JobSeeker |           3 |
+| Employer  |           3 |
+| Admin     |           1 |
++-----------+-------------+
+3 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q13. Count jobs according to job type
+mysql> SELECT job_type, COUNT(*) AS total_jobs
+    -> FROM Jobs
+    -> GROUP BY job_type
+    -> ORDER BY job_type;
++------------+------------+
+| job_type   | total_jobs |
++------------+------------+
+| Full-Time  |         10 |
+| Part-Time  |          2 |
+| Internship |          4 |
++------------+------------+
+3 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q14. Find the average salary for each job type
+mysql> SELECT job_type, ROUND(AVG(salary), 2) AS average_salary
+    -> FROM Jobs
+    -> GROUP BY job_type
+    -> ORDER BY job_type;
++------------+----------------+
+| job_type   | average_salary |
++------------+----------------+
+| Full-Time  |      644000.00 |
+| Part-Time  |      400000.00 |
+| Internship |      220000.00 |
++------------+----------------+
+3 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q15. Count applications according to status
+mysql> SELECT status, COUNT(*) AS total_applications
+    -> FROM Applications
+    -> GROUP BY status
+    -> ORDER BY status;
++-------------+--------------------+
+| status      | total_applications |
++-------------+--------------------+
+| Applied     |                  4 |
+| Pending     |                  1 |
+| Shortlisted |                  1 |
+| Rejected    |                  1 |
+| Selected    |                  1 |
++-------------+--------------------+
+5 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q16. Display job titles with company names
+mysql> SELECT j.job_id, j.job_title, e.company_name
+    -> FROM Jobs j
+    -> JOIN Employers e ON j.employer_id = e.employer_id
+    -> WHERE j.job_id <= 8
+    -> ORDER BY j.job_id;
++--------+-----------------------+---------------------+
+| job_id | job_title             | company_name        |
++--------+-----------------------+---------------------+
+|      1 | Java Developer        | Tech Solutions Ltd  |
+|      2 | Frontend Developer    | Tech Solutions Ltd  |
+|      3 | Data Analyst          | Innovate IT Pvt Ltd |
+|      4 | Cloud Engineer Intern | Innovate IT Pvt Ltd |
+|      5 | Cyber Security Intern | Tech Solutions Ltd  |
+|      6 | Business Analyst      | NextGen Analytics   |
+|      7 | Python Developer      | NextGen Analytics   |
+|      8 | SQL Support Associate | Innovate IT Pvt Ltd |
++--------+-----------------------+---------------------+
+8 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q17. Display job titles and their categories
+mysql> SELECT j.job_title, c.category_name
+    -> FROM JobCategory jc
+    -> JOIN Jobs j ON jc.job_id = j.job_id
+    -> JOIN Categories c ON jc.category_id = c.category_id
+    -> ORDER BY j.job_id, c.category_id;
++-----------------------+----------------------+
+| job_title             | category_name        |
++-----------------------+----------------------+
+| Java Developer        | Software Development |
+| Frontend Developer    | Web Development      |
+| Data Analyst          | Data Science         |
+| Cloud Engineer Intern | Cloud Computing      |
+| Cyber Security Intern | Cyber Security       |
+| Business Analyst      | Business Analysis    |
+| Python Developer      | Software Development |
+| Python Developer      | Data Science         |
+| SQL Support Associate | Software Development |
++-----------------------+----------------------+
+9 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q18. Display job seekers, jobs applied for, and application status
+mysql> SELECT job_seeker, job_title, status
+    -> FROM vw_application_status
+    -> ORDER BY application_id;
++--------------+-----------------------+-------------+
+| job_seeker   | job_title             | status      |
++--------------+-----------------------+-------------+
+| Rahul Sharma | Java Developer        | Applied     |
+| Rahul Sharma | Frontend Developer    | Shortlisted |
+| Nikhil Kumar | Data Analyst          | Applied     |
+| Nikhil Kumar | Cloud Engineer Intern | Selected    |
+| Rahul Sharma | Cyber Security Intern | Applied     |
+| Priya Reddy  | Business Analyst      | Pending     |
+| Priya Reddy  | Python Developer      | Applied     |
+| Nikhil Kumar | SQL Support Associate | Rejected    |
++--------------+-----------------------+-------------+
+8 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q19. Count jobs posted by each company
+mysql> SELECT e.company_name,
+    ->        COUNT(j.job_id) AS total_jobs
+    -> FROM Employers e
+    -> LEFT JOIN Jobs j ON e.employer_id = j.employer_id
+    -> GROUP BY e.employer_id, e.company_name
+    -> ORDER BY e.employer_id;
++---------------------+------------+
+| company_name        | total_jobs |
++---------------------+------------+
+| Tech Solutions Ltd  |          6 |
+| Innovate IT Pvt Ltd |          6 |
+| NextGen Analytics   |          4 |
++---------------------+------------+
+3 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q20. Find the highest-paying job or jobs
+mysql> SELECT job_title, location, salary
+    -> FROM Jobs
+    -> WHERE salary = (
+    ->     SELECT MAX(salary)
+    ->     FROM Jobs
+    -> );
++------------------+---------------+-----------+
+| job_title        | location      | salary    |
++------------------+---------------+-----------+
+| Python Developer | Visakhapatnam | 720000.00 |
+| Python Developer | Visakhapatnam | 720000.00 |
++------------------+---------------+-----------+
+2 rows in set (0.00 sec)
+
+mysql>
+mysql> -- Q21. Display jobs with salary above the overall average
+mysql> SELECT job_title, location, salary
+    -> FROM Jobs
+    -> WHERE salary > (
+    ->     SELECT AVG(salary)
+    ->     FROM Jobs
+    -> )
+    -> ORDER BY salary DESC, job_title;
++--------------------+---------------+-----------+
+| job_title          | location      | salary    |
++--------------------+---------------+-----------+
+| Python Developer   | Visakhapatnam | 720000.00 |
+| Python Developer   | Visakhapatnam | 720000.00 |
+| Java Developer     | Hyderabad     | 700000.00 |
+| Java Developer     | Hyderabad     | 700000.00 |
+| Data Analyst       | Bangalore     | 650000.00 |
+| Data Analyst       | Bangalore     | 650000.00 |
+| Frontend Developer | Hyderabad     | 600000.00 |
+| Frontend Developer | Hyderabad     | 600000.00 |
+| Business Analyst   | Visakhapatnam | 550000.00 |
+| Business Analyst   | Visakhapatnam | 550000.00 |
++--------------------+---------------+-----------+
+10 rows in set (0.00 sec)
+
 mysql>
 mysql> -- ============================================================
 mysql> -- END OF PROJECT
 mysql> -- ============================================================
-mysql>
